@@ -1,0 +1,2 @@
+# smhi
+SMHI rust crate.
