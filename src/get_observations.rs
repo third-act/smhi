@@ -132,7 +132,7 @@ impl Gateway {
             let date = match NaiveDate::parse_from_str(columns[0], "%Y-%m-%d") {
                 Ok(date) => date,
                 Err(_) => {
-                    println!("Error parsing {} as date.", columns[0]);
+                    //println!("Error parsing {} as date.", columns[0]);
                     continue;
                 }
             };
@@ -141,7 +141,7 @@ impl Gateway {
             let time = match NaiveTime::parse_from_str(columns[1], "%H:%M:%S") {
                 Ok(time) => time,
                 Err(_) => {
-                    println!("Error parsing {} as time.", columns[1]);
+                    //println!("Error parsing {} as time.", columns[1]);
                     continue;
                 }
             };
@@ -150,7 +150,7 @@ impl Gateway {
             let value = match columns[2].parse::<f64>() {
                 Ok(value) => value,
                 Err(_) => {
-                    println!("Error parsing {} as a number.", columns[2]);
+                    //println!("Error parsing {} as a number.", columns[2]);
                     continue;
                 }
             };
@@ -221,17 +221,15 @@ impl Gateway {
             let date = match NaiveDateTime::from_timestamp_opt(timestamp, 0) {
                 Some(date) => date,
                 None => {
-                    println!("Error parsing {} as date.", timestamp);
+                    //println!("Error parsing {} as date.", timestamp);
                     continue;
                 }
             };
 
-            println!("XXX {} {}", data.date, date);
-
             let value = match data.value.parse::<f64>() {
                 Ok(value) => value,
                 Err(_) => {
-                    println!("Error parsing {} as a number.", data.value);
+                    //println!("Error parsing {} as a number.", data.value);
                     continue;
                 }
             };
