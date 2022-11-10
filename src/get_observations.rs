@@ -56,14 +56,14 @@ impl Gateway {
                 )));
             }
         };
-        let latest_months_url = match latest_months_url {
-            Some(latest_months_url) => latest_months_url,
-            None => {
-                return Err(Error::ParseError(format!(
-                    "Could not find latest-months in period."
-                )));
-            }
-        };
+        // let latest_months_url = match latest_months_url {
+        //     Some(latest_months_url) => latest_months_url,
+        //     None => {
+        //         return Err(Error::ParseError(format!(
+        //             "Could not find latest-months in period."
+        //         )));
+        //     }
+        // };
 
         // Get corrected archive.
 
@@ -164,81 +164,82 @@ impl Gateway {
         }
 
         // Get latest months.
+        if let Some(latest_months_url) = latest_months_url {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct LatestMonthsData {
+                link: Vec<Link>,
+            }
 
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct LatestMonthsData {
-            link: Vec<Link>,
-        }
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct LatestMonthsResponse {
+                data: Vec<LatestMonthsData>,
+            }
 
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct LatestMonthsResponse {
-            data: Vec<LatestMonthsData>,
-        }
+            let res: LatestMonthsResponse = self.get(&latest_months_url).await?;
 
-        let res: LatestMonthsResponse = self.get(&latest_months_url).await?;
-
-        let mut latest_months_data_url = None;
-        'out: for data in res.data {
-            for link in data.link {
-                if link.r#type == "application/json" {
-                    latest_months_data_url = Some(link.href);
-                    break 'out;
+            let mut latest_months_data_url = None;
+            'out: for data in res.data {
+                for link in data.link {
+                    if link.r#type == "application/json" {
+                        latest_months_data_url = Some(link.href);
+                        break 'out;
+                    }
                 }
             }
-        }
-        let latest_months_data_url = match latest_months_data_url {
-            Some(latest_months_data_url) => latest_months_data_url,
-            None => {
-                return Err(Error::ParseError(format!(
-                    "Could not find json data in latest-months."
-                )));
-            }
-        };
-
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Value {
-            date: u64,
-            value: String,
-            quality: String,
-        }
-
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct LatestMonthsDataResponse {
-            value: Vec<Value>,
-        }
-
-        let res: LatestMonthsDataResponse = self.get(&latest_months_data_url).await?;
-
-        // Add the last four months. NOTE: We do not handle duplicates, as the client may not want
-        // the performance penalty.
-        for data in res.value {
-            // NOTE: The timestamp is in milliseconds.
-            let timestamp = (data.date as f64 / 1000.0) as i64;
-            let date = match NaiveDateTime::from_timestamp_opt(timestamp, 0) {
-                Some(date) => date,
+            let latest_months_data_url = match latest_months_data_url {
+                Some(latest_months_data_url) => latest_months_data_url,
                 None => {
-                    //println!("Error parsing {} as date.", timestamp);
-                    continue;
+                    return Err(Error::ParseError(format!(
+                        "Could not find json data in latest-months."
+                    )));
                 }
             };
 
-            let value = match data.value.parse::<f64>() {
-                Ok(value) => value,
-                Err(_) => {
-                    //println!("Error parsing {} as a number.", data.value);
-                    continue;
-                }
-            };
-
-            if data.quality != "G" && data.quality != "Y" {
-                continue;
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Value {
+                date: u64,
+                value: String,
+                quality: String,
             }
 
-            observations.push((date, value));
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct LatestMonthsDataResponse {
+                value: Vec<Value>,
+            }
+
+            let res: LatestMonthsDataResponse = self.get(&latest_months_data_url).await?;
+
+            // Add the last four months. NOTE: We do not handle duplicates, as the client may not
+            // want the performance penalty.
+            for data in res.value {
+                // NOTE: The timestamp is in milliseconds.
+                let timestamp = (data.date as f64 / 1000.0) as i64;
+                let date = match NaiveDateTime::from_timestamp_opt(timestamp, 0) {
+                    Some(date) => date,
+                    None => {
+                        //println!("Error parsing {} as date.", timestamp);
+                        continue;
+                    }
+                };
+
+                let value = match data.value.parse::<f64>() {
+                    Ok(value) => value,
+                    Err(_) => {
+                        //println!("Error parsing {} as a number.", data.value);
+                        continue;
+                    }
+                };
+
+                if data.quality != "G" && data.quality != "Y" {
+                    continue;
+                }
+
+                observations.push((date, value));
+            }
         }
 
         Ok(observations)
