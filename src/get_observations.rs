@@ -56,14 +56,6 @@ impl Gateway {
                 )));
             }
         };
-        // let latest_months_url = match latest_months_url {
-        //     Some(latest_months_url) => latest_months_url,
-        //     None => {
-        //         return Err(Error::ParseError(format!(
-        //             "Could not find latest-months in period."
-        //         )));
-        //     }
-        // };
 
         // Get corrected archive.
 

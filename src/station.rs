@@ -12,6 +12,8 @@ pub struct Station {
 
     pub longitude: f64,
 
+    pub active: bool,
+
     pub title: String,
 
     pub summary: String,

@@ -26,17 +26,19 @@ impl Gateway {
         // Find closest.
         let mut closest = None;
         for station in res.station {
-            // NOTE: We are using flat earth approximation, as the distances are expected to be \
-            // small, otherwise the data from the station will not be relevant anyway.
-            let distance =
-                distance_meters(latitude, longitude, station.latitude, station.longitude);
-            match &closest {
-                Some((_, closest_distance)) => {
-                    if &distance < closest_distance {
-                        closest = Some((station.clone(), distance));
+            if station.active {
+                // NOTE: We are using flat earth approximation, as the distances are expected to be \
+                // small, otherwise the data from the station will not be relevant anyway.
+                let distance =
+                    distance_meters(latitude, longitude, station.latitude, station.longitude);
+                match &closest {
+                    Some((_, closest_distance)) => {
+                        if &distance < closest_distance {
+                            closest = Some((station.clone(), distance));
+                        }
                     }
+                    None => closest = Some((station.clone(), distance)),
                 }
-                None => closest = Some((station.clone(), distance)),
             }
         }
 
