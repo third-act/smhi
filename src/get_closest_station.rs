@@ -7,6 +7,7 @@ impl Gateway {
         latitude: f64,
         longitude: f64,
         parameter: &'a Parameter,
+        exclude: Option<&Vec<u32>>,
     ) -> Result<(Station, f64), Error> {
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
@@ -27,6 +28,13 @@ impl Gateway {
         let mut closest = None;
         for station in res.station {
             if station.active {
+                // Skip excluded stations.
+                if let Some(exclude) = exclude {
+                    if exclude.contains(&station.id) {
+                        continue;
+                    }
+                }
+
                 // NOTE: We are using flat earth approximation, as the distances are expected to be \
                 // small, otherwise the data from the station will not be relevant anyway.
                 let distance =
